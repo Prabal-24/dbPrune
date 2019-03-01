@@ -8,15 +8,18 @@ class TansferDataWorker
   @@tables_read = {}
   @@tables_to_read = {}
   @@table_reflections_hash = {}
+  @@tables_has_one_many_reflections_to_read = {}
   def perform(service, master_db, prune_db)
     @@tables_read = {}
     @@tables_to_read = {}
     @@table_reflections_hash = {}
     final_tables_with_conditions = {}
+    @@tables_has_one_many_reflections_to_read = {}
     service_name = eval("DBPrune.#{service}_service_name")
     base_models_for_reflections = eval("DBPrune.#{service}_base_models_for_reflections")
     master_tables_for_prune = eval("DBPrune.#{service}_master_tables_for_prune")
     base_tables_for_prune = eval("DBPrune.#{service}_base_tables_for_prune")
+    @@tables_has_one_many_reflections_to_read = eval("DBPrune.#{service}_has_one_many_reflections_to_read")
     url = "http://#{service_name}/model_reflections?models=#{base_models_for_reflections}"
     @@table_reflections_hash = ExternalApiHelper.get_api_call(url)
     @@tables_to_read = master_tables_for_prune
@@ -46,29 +49,43 @@ class TansferDataWorker
       reflection_macros = @@table_reflections_hash[table[0]][v]["macros"]
       reflection_foreign_keys = @@table_reflections_hash[table[0]][v]["foreign_keys"]
       reflection_primary_keys = @@table_reflections_hash[table[0]][v]["primary_keys"]
+      reflection_throughs = @@table_reflections_hash[table[0]][v]["throughs"]
       if !((@@tables_to_read.key?(reflection_table)&&@@tables_to_read[reflection_table].empty?)||(@@tables_read.key?(reflection_table)&&@@tables_read[reflection_table].empty?))
         reflection_macros.length.times do |i|
           reflection_macro = reflection_macros[i]
           reflection_foreign_key = reflection_foreign_keys[i]
           reflection_primary_key = reflection_primary_keys[i]
-          case reflection_macro
-          when "belongs_to" 
+          reflection_through = reflection_throughs[i]
+          keys_acc_case = generate_key_according_case(table, reflection_table, reflection_macro, reflection_through, reflection_foreign_key, reflection_primary_key)
+          if !keys_acc_case.empty?
             if foreign_tables_keys.key?(reflection_table)
-              foreign_tables_keys[reflection_table]["foreign_keys"].push(reflection_foreign_key)
-              foreign_tables_keys[reflection_table]["primary_keys"].push(reflection_primary_key)
+              foreign_tables_keys[reflection_table]["foreign_keys"].push(keys_acc_case["foreign_key"])
+              foreign_tables_keys[reflection_table]["primary_keys"].push(keys_acc_case["primary_key"])
             else
               keys={}
-              keys.store("foreign_keys",[reflection_foreign_key])
-              keys.store("primary_keys",[reflection_primary_key])
+              keys.store("foreign_keys",[keys_acc_case["foreign_key"]])
+              keys.store("primary_keys",[keys_acc_case["primary_key"]])
               foreign_tables_keys.store(reflection_table,keys)
             end
-          # when "has_one", "has_one"  
-            
-          # end
+          end
         end
       end
     end
     return foreign_tables_keys
+  end
+  def generate_key_according_case(table, reflection_table, reflection_macro, reflection_through, reflection_foreign_key, reflection_primary_key)
+    keys = {}
+    case reflection_macro
+    when "belongs_to" 
+      keys["foreign_key"] = reflection_foreign_key
+      keys["primary_key"] = reflection_primary_key
+    when "has_one", "has_many"  
+      if reflection_through == "FALSE" && @@tables_has_one_many_reflections_to_read.key?(table) && @@tables_has_one_many_reflections_to_read[table].include?(reflection_table)
+        keys["foreign_key"] = reflection_primary_key
+        keys["primary_key"] = reflection_foreign_key
+      end
+    end
+    return keys 
   end
   def update_tables_conditions(table_name, col_conditions = [], foreign_tables_keys = {}, master_db)
     foreign_key_values = []

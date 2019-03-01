@@ -56,34 +56,36 @@ class TansferDataWorker
           reflection_foreign_key = reflection_foreign_keys[i]
           reflection_primary_key = reflection_primary_keys[i]
           reflection_through = reflection_throughs[i]
-          case reflection_macro
-          when "belongs_to" 
+          keys_acc_case = generate_key_according_case(table, reflection_table, reflection_macro, reflection_through, reflection_foreign_key, reflection_primary_key)
+          if !keys_acc_case.empty?
             if foreign_tables_keys.key?(reflection_table)
-              foreign_tables_keys[reflection_table]["foreign_keys"].push(reflection_foreign_key)
-              foreign_tables_keys[reflection_table]["primary_keys"].push(reflection_primary_key)
+              foreign_tables_keys[reflection_table]["foreign_keys"].push(keys_acc_case["foreign_key"])
+              foreign_tables_keys[reflection_table]["primary_keys"].push(keys_acc_case["primary_key"])
             else
               keys={}
-              keys.store("foreign_keys",[reflection_foreign_key])
-              keys.store("primary_keys",[reflection_primary_key])
+              keys.store("foreign_keys",[keys_acc_case["foreign_key"]])
+              keys.store("primary_keys",[keys_acc_case["primary_key"]])
               foreign_tables_keys.store(reflection_table,keys)
-            end
-          when "has_one", "has_many"  
-            if reflection_through == "FALSE" && @@tables_has_one_many_reflections_to_read.key?(table) && @@tables_has_one_many_reflections_to_read[table].include?(reflection_table)
-              if foreign_tables_keys.key?(reflection_table)
-                foreign_tables_keys[reflection_table]["foreign_keys"].push(reflection_primary_key)
-                foreign_tables_keys[reflection_table]["primary_keys"].push(reflection_foreign_key)
-              else
-                keys={}
-                keys.store("foreign_keys",[reflection_primary_key])
-                keys.store("primary_keys",[reflection_foreign_key])
-                foreign_tables_keys.store(reflection_table,keys)
-              end
             end
           end
         end
       end
     end
     return foreign_tables_keys
+  end
+  def generate_key_according_case(table, reflection_table, reflection_macro, reflection_through, reflection_foreign_key, reflection_primary_key)
+    keys = {}
+    case reflection_macro
+    when "belongs_to" 
+      keys["foreign_key"] = reflection_foreign_key
+      keys["primary_key"] = reflection_primary_key
+    when "has_one", "has_many"  
+      if reflection_through == "FALSE" && @@tables_has_one_many_reflections_to_read.key?(table) && @@tables_has_one_many_reflections_to_read[table].include?(reflection_table)
+        keys["foreign_key"] = reflection_primary_key
+        keys["primary_key"] = reflection_foreign_key
+      end
+    end
+    return keys 
   end
   def update_tables_conditions(table_name, col_conditions = [], foreign_tables_keys = {}, master_db)
     foreign_key_values = []

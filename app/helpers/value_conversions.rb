@@ -39,7 +39,7 @@ module ValueConversions
   def operator_case_condition(condition_tuple)
     condition = ""
     case condition_tuple[1]
-    when "<",">","=","<=",">=","<>","!="
+    when "<", ">", "=", "<=", ">=", "<>", "!="
       value = condition_tuple[2].is_a?(String) ? "'#{condition_tuple[2]}'" : "#{condition_tuple[2]}"
       condition = condition_tuple[0] + " " + condition_tuple[1] + " " + value
     when "IS"
@@ -48,7 +48,7 @@ module ValueConversions
       condition = condition_tuple[0] + " " + condition_tuple[1] + " " + "'#{condition_tuple[2]}'"
     when "BETWEEN"
       condition = condition_tuple[0] + " " + condition_tuple[1] + " SYMMETRIC " + "'#{condition_tuple[2][0]}'" + " AND " + "'#{condition_tuple[2][1]}'"
-    when "IN","NOT IN"
+    when "IN", "NOT IN"
       values_array = condition_tuple[2].map{|v| if v.is_a?(String) then "'#{v}'" else "#{v}" end}.join(',')
       condition = condition_tuple[0] + " " + condition_tuple[1] + " " + "(#{values_array})"
     else

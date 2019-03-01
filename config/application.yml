@@ -1,0 +1,12 @@
+#sms
+housing_sms_service_base_tables_for_prune: "{ \"whatsapp_permissions\" : [[\"created_at\",\"BETWEEN\",[\"2019-02-22 19:29:20 +0530\",\"2019-02-21 19:30:06 +0530\"]]] , \"sms_requests\" : [[\"created_at\",\"BETWEEN\",[\"2019-02-22 19:29:20 +0530\",\"2019-02-21 19:30:06 +0530\"]]] }"
+housing_sms_service_master_tables_for_prune: "{\"gateway_types\" : [],\"sms_templates\" : []}"
+housing_sms_service_base_models_for_reflections: "WhatsappPermission,SmsRequest"
+housing_sms_service_service_name: "localhost:3000"
+services_db_hash: "{\"housing_sms_service\" : {\"master_db\" : \"housing_sms_production\" , \"prune_db\" : \"db_prune_housing_sms_production\"}}"
+
+#flats
+housing_flats_service_base_tables_for_prune: "{ \"flats\" : [[\"created_at\",\"BETWEEN\",[\"2019-02-22 19:29:20 +0530\",\"2019-02-21 19:30:06 +0530\"]]] , \"sms_requests\" : [[\"created_at\",\"BETWEEN\",[\"2019-02-22 19:29:20 +0530\",\"2019-02-21 19:30:06 +0530\"]]] }"
+housing_flats_service_master_tables_for_prune: "{\"gateway_types\" : [],\"sms_templates\" : []}"
+housing_flats_service_base_models_for_reflections: "WhatsappPermission,SmsRequest"
+housing_flats_service_service_name: "localhost:3000"

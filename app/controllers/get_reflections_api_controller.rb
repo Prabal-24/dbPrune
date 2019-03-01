@@ -1,0 +1,2 @@
+class GetReflectionsApiController < ApplicationController
+end
